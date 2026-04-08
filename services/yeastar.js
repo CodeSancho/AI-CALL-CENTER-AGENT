@@ -4,22 +4,29 @@
  * Handles call control, webhooks, and audio streaming
  */
 
+const { pbxConfigs } = require('../config')
 const axios = require('axios');
 const https = require('https');
-const { Yeastar } = require('../config');
+
 
 class yeastar {
     constructor() {
-        this.apiUrl = process.env.YEASTAR_API_URL;
-        this.username = process.env.YEASTAR_USERNAME;
-        this.password = process.env.YEASTAR_PASSWORD;
-        this.token = null;
-        this.tokenExpiry = null;
-
-        // Disable SSL verification for self-signed certificates
+        const yeastarConfig = pbxConfigs.find(p => p.id === 'yeastar-main')
+    
+        if (!yeastarConfig) {
+            throw new Error('Yeastar PBX config not found')
+        }
+    
+        this.apiUrl = `https://${yeastarConfig.ip}/api`
+        this.username = yeastarConfig.username
+        this.password = yeastarConfig.password
+    
+        this.token = null
+        this.tokenExpiry = null
+    
         this.httpsAgent = new https.Agent({
             rejectUnauthorized: false
-        });
+        })
     }
 
     /**
@@ -191,7 +198,7 @@ class yeastar {
                 }
             );
 
-            console.log('✓ Call initiated');
+            console.log('Call initiated');
             return response.data;
 
         } catch (error) {

@@ -174,6 +174,19 @@ router.post('/voice/input', upload.single('audio'), async (req, res) => {
  * POST /Voiceflow/call/incoming
  */
 router.post('/call/incoming', async (req, res) => {
+
+    console.log("Incoming headers:", req.headers);
+    console.log("Incoming body:", req.body);
+
+    // ✅ HANDLE YEASTAR TEST EVENT
+    if (req.body.event === 'test') {
+        console.log("✅ Yeastar webhook connectivity test received");
+        return res.json({
+            success: true,
+            message: "Webhook connection successful"
+        });
+    }
+
     try {
         const { callid, from, to } = req.body;
 
@@ -184,28 +197,19 @@ router.post('/call/incoming', async (req, res) => {
             });
         }
 
-        console.log(` Incoming call from ${from} to ${to} (Call ID: ${callid})`);
+        console.log(`Incoming call from ${from} to ${to} (Call ID: ${callid})`);
 
-        // Create session for this call
         const sessionId = `call_${callid}_${Date.now()}`;
 
-        // Launch Voiceflow and get greeting
         const greeting = await voicehandlerInstance.launchSession(sessionId);
-
-        // Convert greeting to speech
         const greetingAudio = await voicehandlerInstance.textToSpeech(greeting);
 
-        // Upload audio to Yeastar
         const filename = `greeting_${sessionId}.mp3`;
         await yeastarInstance.uploadAudioFile(greetingAudio, filename);
 
-        // Answer the call
         await yeastarInstance.answerCall(callid);
-
-        // Play greeting
         await yeastarInstance.playAudio(callid, filename);
 
-        // Store call session
         activeSessions.set(sessionId, {
             callId: callid,
             from,
@@ -215,7 +219,7 @@ router.post('/call/incoming', async (req, res) => {
             messageCount: 0
         });
 
-        console.log(` Call answered and greeting played`);
+        console.log("Call answered and greeting played");
 
         res.json({
             success: true,
@@ -226,7 +230,7 @@ router.post('/call/incoming', async (req, res) => {
         });
 
     } catch (error) {
-        console.error(' Error handling incoming call:', error.message);
+        console.error('Error handling incoming call:', error.message);
         res.status(500).json({
             success: false,
             error: error.message,
@@ -234,6 +238,7 @@ router.post('/call/incoming', async (req, res) => {
         });
     }
 });
+
 
 /**
  * PROCESS SPEECH from Call (Webhook from Yeastar after recording)

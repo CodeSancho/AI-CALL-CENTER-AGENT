@@ -2,7 +2,17 @@
 require('dotenv').config();
 const app = require('./app');
 
+
 const PORT = process.env.PORT || 4000;
+
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(` Server running on 0.0.0.0:${PORT}`);
+    console.log(` Local: http://localhost:${PORT}`);
+    console.log(` Network: http://45.215.237.202:${PORT}`);
+    console.log(` Health: http://45.215.237.202:${PORT}/Voiceflow/health`);
+});
+
+
 
 app.listen(PORT, () => {
     console.log(` AI Agent Server running on port ${PORT}`);
@@ -22,3 +32,6 @@ process.on('SIGINT', () => {
     console.log('\n Server shutting down...');
     process.exit(0);
 });
+
+
+
